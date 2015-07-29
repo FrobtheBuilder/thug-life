@@ -2,9 +2,6 @@ var gulp = require('gulp')
 var nodemon = require('gulp-nodemon')
 var browserSync = require('browser-sync').create()
 
-var srcDir = "./src/"
-var buildDir = "./app/"
-
 gulp.task('nodemon', function() {
     return nodemon({
         script: "index.coffee",

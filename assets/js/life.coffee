@@ -1,5 +1,3 @@
-
-
 $ ->
   ctx = document.getElementById("life-canvas").getContext("2d")
   ctx.fillStyle = "#FFFFFF"
