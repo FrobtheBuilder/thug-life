@@ -1,69 +1,73 @@
 
 
 
-goodAlgorithm = (c) ->
-  #[[x, x, x],
-  # [x, x, x],
-  # [x, x, x]]
-  surrounding = [
-    c[0][0], c[0][1], c[0][2],
-    c[1][0],          c[1][2],
-    c[2][0], c[2][1], c[2][2]
-  ]
-  livingNeighbors = surrounding.filter((x) -> x.alive).length
-  self = c[1][1].alive
-
-  if (self and (livingNeighbors is 2 or livingNeighbors is 3)) or (not self and livingNeighbors is 3)
+goodAlgorithm = (surrounding, alive) ->
+  neighbors = surrounding.length
+  if (alive and (neighbors is 2 or neighbors is 3)) or (not alive and neighbors is 3)
     true
   else
     false
 
 
 class Cell
-  constructor: (@alive, @location) ->
+  constructor: (@location) ->
+    @alive = true
+    @age = 0
 
-  clone: -> new Cell(@alive, {x: @location.x, y: @location.y})
+  clone: -> new Cell({x: @location.x, y: @location.y})
 
 
 class Grid
-  constructor: (@context, @gWidth, @gHeight) ->
+  constructor: (@context) ->
     @current = []
-    @next = []
+    @nextx = []
 
     @initialize(@current)
-    @initialize(@next)
+    #@initialize(@nextx)
 
-  update: (algo) ->
 
-    for row in @current
-      for cell in row
-        loc = cell.location
-        n =
-          left: (if loc.x > 1 then loc.x - 1 else @gWidth)
-          right: (loc.x + 1) % (@gWidth)
-          above: (if loc.y > 1 then loc.y - 1 else @gHeight)
-          below: (loc.y + 1) % (@gHeight)
+  livingCellAtLocation: (loc) =>
+    for cell in @current
+      if cell.location.x is loc.x and cell.location.y is loc.y
+        return true
+    return false
 
-        chunk = [
-          [@current[n.above][n.left], @current[n.above][loc.x], @current[n.above][n.right]],
-          [@current[loc.y][n.left], cell, @current[loc.y][n.right]],
-          [@current[n.below][n.left], @current[n.below][loc.x], @current[n.below][n.right]]
-        ]
+  update: (algo) =>
 
-        @next[loc.y][loc.x].alive = algo(chunk)
+    @nextx = []
+    for cell in @current
+      surrounding = @getSurrounding cell.location
+      cell.alive = algo(surrounding.filter(@livingCellAtLocation), true)
+      if cell.alive
+        @nextx.push cell
+
+      deadSurrounding = surrounding.filter (x) => not (@livingCellAtLocation x)
+      for location in deadSurrounding
+        if algo((@getSurrounding location).filter(@livingCellAtLocation), false)
+          @nextx.push new Cell(location)
 
     @current = []
-    for r in [0..@gHeight]
-      @current.push (cell.clone() for cell in @next[r])
+    # @current = (cell.clone() for cell in @nextx)
+    @current = @nextx
 
-
-
+  getSurrounding: (l) ->
+    return [
+      {x: l.x-1, y: l.y-1}
+      {x: l.x, y: l.y-1}
+      {x: l.x+1, y: l.y-1}
+      {x: l.x-1, y: l.y}
+      {x: l.x+1, y: l.y}
+      {x: l.x-1, y: l.y+1}
+      {x: l.x, y: l.y+1}
+      {x: l.x+1, y: l.y-1}
+    ]
 
   initialize: (cells) ->
-    for r in [0..@gHeight]
-      cells.push []
-      for c in [0..@gWidth]
-        cells[r].push new Cell(Math.random() > 0.2, {x: c, y: r})
+    for i in [0..400]
+      where =
+        x: Math.floor(Math.random()*40)
+        y: Math.floor(Math.random()*40)
+      cells.push new Cell({x: where.x, y: where.y})
 
 
 
@@ -71,17 +75,15 @@ class Grid
     ctx = @context
     ctx.fillStyle = "#FFFFFF"
 
-    for row in @current
-      for cell in row
-        if cell.alive
-          ctx.fillRect (cell.location.x*cWidth)*cSpacing, (cell.location.y*cHeight)*cSpacing, cWidth, cHeight
+    for cell in @current
+      ctx.fillRect (cell.location.x*cWidth)*cSpacing, (cell.location.y*cHeight)*cSpacing, cWidth, cHeight
 
 $ ->
   canvas = document.getElementById("life-canvas")
   ctx = canvas.getContext("2d")
   ctx.canvas.height = 500
 
-  grid = new Grid(ctx, $(".main").width()/5, 40)
+  grid = new Grid(ctx)
   press = false
 
   $("#life-canvas").on "mousedown", (e) ->
@@ -93,19 +95,17 @@ $ ->
     if press
       x = Math.floor (e.pageX - $("#life-canvas").offset().left)/5
       y = Math.floor (e.pageY - $("#life-canvas").offset().top)/5
-      grid.current[y][x].alive = true
+      grid.current.push new Cell({x: x, y: y})
 
   $("#life-canvas").click (e) ->
     x = Math.floor (e.pageX - $("#life-canvas").offset().left)/5
     y = Math.floor (e.pageY - $("#life-canvas").offset().top)/5
 
-    grid.current[y][x].alive = true
+    grid.current.push new Cell({x: x, y: y})
 
   window.setInterval ->
-
     ctx.canvas.width = $(".main").width()
     ctx.clearRect 0, 0, canvas.width, canvas.height
-
     unless press
       grid.update(goodAlgorithm)
     grid.draw(5, 5, 1)
