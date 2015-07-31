@@ -22,7 +22,7 @@ goodAlgorithm = (c) ->
 class Cell
   constructor: (@alive, @location) ->
 
-  clone: -> return new Cell(@alive, {x: @location.x, y: @location.y})
+  clone: -> new Cell(@alive, {x: @location.x, y: @location.y})
 
 
 class Grid
@@ -54,9 +54,9 @@ class Grid
 
     @current = []
     for r in [0..@gHeight]
-      @current.push []
-      for c in [0..@gWidth]
-        @current[r].push @next[r][c].clone()
+      @current.push (cell.clone() for cell in @next[r])
+
+
 
 
   initialize: (cells) ->
