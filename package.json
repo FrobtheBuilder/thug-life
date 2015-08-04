@@ -9,11 +9,15 @@
   "author": "Frob the Builder",
   "license": "ISC",
   "dependencies": {
+    "browserify": "^11.0.1",
     "coffee-script": "^1.9.3",
+    "coffeeify": "^1.1.0",
     "connect-assets": "^5.0.0",
+    "connect-assets-jspaths": "0.0.10",
     "express": "^4.13.1",
     "jade": "^1.11.0",
-    "stylus": "^0.52.0"
+    "stylus": "^0.52.0",
+    "vinyl-source-stream": "^1.1.0"
   },
   "devDependencies": {
     "browser-sync": "^2.8.0",

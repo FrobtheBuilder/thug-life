@@ -1,1 +1,3 @@
-console.log "hiiiiiiiiiiiiiiiiiiiiiii"
+module.exports = {
+	hi: "hi"
+}
