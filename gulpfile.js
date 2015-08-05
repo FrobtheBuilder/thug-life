@@ -41,7 +41,7 @@ gulp.task('serve', ['nodemon'], function() {
         gulp.run('reload')
     }
 
-    gulp.watch('./views/**/*.jade').on('change', reload)
+    gulp.watch('./views/**/*.jade').on('change', browserSync.reload)
     gulp.watch('./assets/**/*.coffee').on('change', reload)
-    gulp.watch('./assets/**/*.styl').on('change', reload)
+    gulp.watch('./assets/**/*.styl').on('change', browserSync.reload)
 })

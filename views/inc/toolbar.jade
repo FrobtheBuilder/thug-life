@@ -3,8 +3,14 @@ nav.navbar.navbar-default.navbar-fixed-top
       .navbar-header
          // ?
       a.navbar-brand(href="#")
-         span.page Thug Life
-      ul.nav.navbar-nav
+         span.page GoL
+      form.navbar-form.navbar-left
+         .btn-group
+            a.btn.btn-default.pause.glyphicon.glyphicon-pause
+               //span.glyphicon.glyphicon-pause
+            a.btn.btn-default.clear-board.glyphicon.glyphicon-certificate
+               //span.glyphicon.glyphicon-certificate
+      ul.nav.navbar-nav.navbar-right
          li
             a(href="/user/browse/1") Life
          li
@@ -13,9 +19,3 @@ nav.navbar.navbar-default.navbar-fixed-top
             a(href="/user/browse/1") Otherlife1
          li
             a(href="/user/browse/1") Otherlife2
-      form.navbar-form.navbar-right
-         .btn-group
-            a.btn.btn-default.pause
-               span.glyphicon.glyphicon-pause
-            a.btn.btn-default.clear-board
-               span.glyphicon.glyphicon-certificate

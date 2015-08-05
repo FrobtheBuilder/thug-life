@@ -1,9 +1,15 @@
-life = (c, alive) ->
-  livingNeighbors = c.reduce ((acc, e) -> if e then acc+1 else acc), 0
-  if (alive and (livingNeighbors is 2 or livingNeighbors is 3)) or (not alive and livingNeighbors is 3)
-    true
-  else
-    false
+algorithms =
+  life: (c, alive) ->
+    #livingNeighbors = c.reduce ((acc, e) -> if e then acc+1 else acc), 0
+    livingNeighbors = 0
+
+    for cell in c
+      if cell then livingNeighbors += 1
+
+    if (alive and (livingNeighbors is 2 or livingNeighbors is 3)) or (not alive and livingNeighbors is 3)
+      true
+    else
+      false
 
 class Cell
   constructor: ->
@@ -42,12 +48,11 @@ class Grid
           below: (row + 1) % (@info.rows)
 
         chunk = [
-          @current[n.above][n.left], @current[n.above][col], @current[n.above][n.right],
-          @current[row][n.left],                             @current[row][n.right],
-          @current[n.below][n.left], @current[n.below][col], @current[n.below][n.right]
+          @current[n.above][n.left].alive, @current[n.above][col].alive, @current[n.above][n.right].alive,
+          @current[row][n.left].alive,                             @current[row][n.right].alive,
+          @current[n.below][n.left].alive, @current[n.below][col].alive, @current[n.below][n.right].alive
         ]
-
-        @next[row][col].alive = algo(chunk.map((x) -> x.alive), cell.alive)
+        @next[row][col].alive = algo(chunk, cell.alive)
         if @current[row][col].alive and @current[row][col].alive is @next[row][col].alive
           @next[row][col].age += 1
         else
@@ -69,11 +74,10 @@ class Grid
     for row in [0..@info.rows]
       for col in [0..@info.columns]
         if @current[row][col].alive
-          ctx.fillStyle = "rgb(#{255-String(@current[row][col].age*5)}, #{String(@current[row][col].age*20)}, #{String(@current[row][col].age*10)})"
+          ctx.context.fillStyle = "rgb(#{255-String(@current[row][col].age*5)}, #{String(@current[row][col].age*20)}, #{String(@current[row][col].age*10)})"
           ctx.fillRect (col*cWidth)*cSpacing, (row*cHeight)*cSpacing, cWidth, cHeight
 
 module.exports =
-  algorithms:
-    life: life
+  algorithms: algorithms
   Cell: Cell
   Grid: Grid
