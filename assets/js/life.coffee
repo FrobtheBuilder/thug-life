@@ -74,7 +74,7 @@ class Grid
     for row in [0..@info.rows]
       for col in [0..@info.columns]
         if @current[row][col].alive
-          ctx.context.fillStyle = "rgb(#{255-String(@current[row][col].age*5)}, #{String(@current[row][col].age*20)}, #{String(@current[row][col].age*10)})"
+          ctx.fillStyle = "rgb(#{255-String(@current[row][col].age*5)}, #{String(@current[row][col].age*20)}, #{String(@current[row][col].age*10)})"
           ctx.fillRect (col*cWidth)*cSpacing, (row*cHeight)*cSpacing, cWidth, cHeight
 
 module.exports =
