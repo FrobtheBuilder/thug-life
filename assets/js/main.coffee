@@ -3,12 +3,12 @@ util = require "./util.coffee"
 
 class App
   constructor: ->
-
     @paused = false
     @dom = @getDomElements()
 
     @canvas = document.getElementById("life-canvas")
     @context = @canvas.getContext("2d")
+    util.augmentContext(@context)
 
     @view = new util.View(this)
 
@@ -26,8 +26,8 @@ class App
     @context.canvas.width = @dom.container.width()
     @context.canvas.height = h
 
-  initializeGrid: (rows, cols) ->
-    return new life.Grid(@context, @context.canvas.width/cols, Math.floor(@context.canvas.height/rows))
+  initializeGrid: (cellWidth, cellHeight) ->
+    return new life.Grid(@context, @context.canvas.width/cellWidth, Math.floor(@context.canvas.height/cellHeight))
 
   getDomElements: ->
     container: $(".main")
@@ -53,21 +53,21 @@ class App
   bindViewEvents: (viewEvents) ->
     viewEvents.on "mousedown", (e) =>
       #paused = true
-      @grid.current[Math.floor(e.mouse.y/5)][Math.floor(e.mouse.x/5)].alive = true
+      pt = @context.transformedPoint(e.mouse.x, e.mouse.y)
+      @grid.current[Math.floor(pt.y/5)][Math.floor(pt.x/5)].alive = true
 
     viewEvents.on "mousemove", (e) =>
       if e.mouse.down
-        @grid.current[Math.floor(e.mouse.y/5)][Math.floor(e.mouse.x/5)].alive = true
+        pt = @context.transformedPoint(e.mouse.x, e.mouse.y)
+        @grid.current[Math.floor(pt.y/5)][Math.floor(pt.x/5)].alive = true
 
-    viewEvents.on "mousewheel", (e) =>
-      if e.up
-        @view.zoom (e.mouse.x + @view.viewport().center.x)/2, (e.mouse.y + @view.viewport().center.y)/2, 0.05
-      else
-        @view.zoom @view.viewport().width - (e.mouse.x + @view.viewport().center.x)/2, @view.viewport().height - (e.mouse.y + @view.viewport().center.y)/2, -0.2
+    viewEvents.on "mousewheel", util.zoom
 
   initializeLoop: (ms) ->
     window.setInterval =>
-      @context.clearRect 0, 0, @context.canvas.width, @context.canvas.height
+      p1 = @context.transformedPoint(0, 0)
+      p2 = @context.transformedPoint(@context.canvas.width, @context.canvas.height)
+      @context.clearRect p1.x, p1.y, p2.x-p1.x, p2.y-p1.y
 
       unless @view.mouse.down or @paused
         @grid.update(life.algorithms.life)

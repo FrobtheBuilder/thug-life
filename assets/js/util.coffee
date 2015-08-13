@@ -1,5 +1,70 @@
 events = require "events"
 
+# adapted from http://phrogz.net/tmp/canvas_zoom_to_cursor.html
+augmentContext = (ctx) ->
+  svg = document.createElementNS "http://www.w3.org/2000/svg",'svg'
+  xform = svg.createSVGMatrix()
+  ctx.getTransform = -> xform
+  savedTransforms = []
+  save = ctx.save
+  ctx.save = ->
+    savedTransforms.push xform.translate 0,0
+    return save.call(ctx)
+
+  restore = ctx.restore
+  ctx.restore = ->
+    xform = savedTransforms.pop()
+    return restore.call(ctx)
+
+  scale = ctx.scale
+  ctx.scale = (sx, sy) ->
+    xform = xform.scaleNonUniform(sx, sy)
+    return scale.call(ctx, sx, sy)
+
+  rotate = ctx.rotate
+  ctx.rotate = (radians) ->
+    xform = xform.rotate(radians*180/Math.PI)
+    return rotate.call(ctx, radians)
+
+  translate = ctx.translate
+  ctx.translate = (dx, dy) ->
+    xform = xform.translate(dx, dy)
+    return translate.call(ctx, dx, dy)
+
+  transform = ctx.transform
+  ctx.transform = (a, b, c, d, e, f) ->
+    m2 = svg.createSVGMatrix()
+    [m2.a, m2.b, m2.c, m2.d, m2.e, m2.f] = [a, b, c, d, e, f]
+    xform = xform.multiply m2
+    return transform.call(ctx, a, b, c, d, e, f)
+
+  setTransform = ctx.setTransform
+  ctx.setTransform = (a, b, c, d, e, f) ->
+    xform.a = a
+    xform.b = b
+    xform.c = c
+    xform.d = d
+    xform.e = e
+    xform.f = f
+    return setTransform.call(ctx, a, b, c, d, e, f)
+
+  pt = svg.createSVGPoint()
+  ctx.transformedPoint = (x, y) ->
+    [pt.x, pt.y] = [x, y]
+    return pt.matrixTransform(xform.inverse())
+
+  ctx.unTransformedPoint = (x, y) ->
+    [pt.x, pt.y] = [x, y]
+    return pt.matrixTransform(xform)
+
+zoom = (e) ->
+  ctx = e.jq.target.getContext("2d")
+  pt = ctx.transformedPoint(Math.round(e.mouse.x)*1.0, Math.round(e.mouse.y)*1.0)
+  ctx.translate(pt.x, pt.y)
+  factor = Math.pow(1.1, e.delta)
+  ctx.scale(factor, factor)
+  ctx.translate(-pt.x, -pt.y)
+
 class View
   constructor: (@app) ->
     @context = @app.context
@@ -14,69 +79,44 @@ class View
         x: 0
         y: 0
 
-    @location =
-      x: 0
-      y: 0
+    @e = @wrapEvents $(@context.canvas)
 
-    @scale =
-      x: 1
-      y: 1
-
-    @e = new events.EventEmitter()
-    $ctx = $(@context.canvas)
-
+  wrapEvents: ($ctx, emitter) ->
+    emitter = new events.EventEmitter()
     $ctx.on "mousedown", (jqe) =>
       @mouse.down = true
       @updateMouse(jqe)
-      @e.emit "mousedown", {jq: jqe, mouse: @mouse}
+      emitter.emit "mousedown", {jq: jqe, mouse: @mouse}
 
     $ctx.on "mouseup", (jqe) =>
       @mouse.down = false
-      @e.emit "mouseup", {jq: jqe, mouse: @mouse}
+      emitter.emit "mouseup", {jq: jqe, mouse: @mouse}
 
     $ctx.on "mousemove", (jqe) =>
       @updateMouse(jqe)
-      @e.emit "mousemove", {jq: jqe, mouse: @mouse}
+      emitter.emit "mousemove", {jq: jqe, mouse: @mouse}
 
-    $(window).bind 'mousewheel DOMMouseScroll', (jqe) =>
-      @updateMouse(jqe)
-      @e.emit "mousewheel", {jq: jqe, mouse: @mouse, up: (jqe.originalEvent.wheelDelta > 0 or jqe.originalEvent.detail < 0)}
+    $ctx.bind 'mousewheel DOMMouseScroll', (jqe) =>
+      #@updateMouse(jqe)
+      oEvt = jqe.originalEvent
+      delta = if oEvt.wheelDelta?
+        oEvt.wheelDelta/40
+      else if oEvt.detail?
+        -oEvt.detail
+      else
+        0
+      emitter.emit "mousewheel", {jq: jqe, mouse: @mouse, delta: delta}
+      return oEvt.preventDefault() and false
 
-  setRectangle: (x, y, w, h) ->
-    [@location.x, @location.y] = [x, y]
-    oldWidth = @context.canvas.width / @scale.x
-    oldHeight = @context.canvas.height / @scale.y
-    @scale.x = oldWidth / w
-    @scale.y = oldHeight / h
-
-  zoom: (x, y, factor) ->
-    @scale.x += factor
-    @scale.y += factor
-
-    width = @context.canvas.width / @scale.x
-    height = @context.canvas.height / @scale.y
-
-    @location.x = Math.floor(x - (width/2))
-    @location.y = Math.floor(y - (height/2))
-
-
-  viewport: ->
-    x: @location.x
-    y: @location.y
-    width: @context.canvas.width / @scale.x
-    height: @context.canvas.height / @scale.y
-    center:
-      x: @location.x + ((@context.canvas.width / @scale.x)/2)
-      y: @location.y + ((@context.canvas.height / @scale.y)/2)
+    return emitter
 
   updateMouse: (jqe) =>
-    @mouse.x = ((jqe.pageX - $(@context.canvas).offset().left) / @scale.x) + @location.x
-    @mouse.y = ((jqe.pageY - $(@context.canvas).offset().top) / @scale.y) + @location.y
+    @mouse.x = (jqe.pageX - $(@context.canvas).offset().left)
+    @mouse.y = (jqe.pageY - $(@context.canvas).offset().top)
     @mouse.local.x = (jqe.pageX - $(@context.canvas).offset().left)
     @mouse.local.y = (jqe.pageY - $(@context.canvas).offset().top)
 
-  fillRect: (x, y, w, h) ->
-    @context.fillRect((x - @location.x)*@scale.x, (y - @location.y)*@scale.y, w * @scale.x, h * @scale.y)
-
 module.exports =
   View: View
+  augmentContext: augmentContext
+  zoom: zoom
