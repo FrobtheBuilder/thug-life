@@ -1,3 +1,5 @@
+util = require './util.coffee'
+
 algorithms =
   life: (c, alive) ->
     #livingNeighbors = c.reduce ((acc, e) -> if e then acc+1 else acc), 0
@@ -74,7 +76,9 @@ class Grid
     for row in [0..@info.rows]
       for col in [0..@info.columns]
         if @current[row][col].alive
-          ctx.fillStyle = "rgb(#{255-String(@current[row][col].age*5)}, #{String(@current[row][col].age*20)}, #{String(@current[row][col].age*10)})"
+          cellcolor = [0, 0, 0]
+          cellcolor = util.color(@current[row][col].age/10)
+          ctx.fillStyle = "rgb(#{String(cellcolor[0])}, #{String(cellcolor[1])}, #{String(cellcolor[2])})"
           ctx.fillRect (col*cWidth)*cSpacing, (row*cHeight)*cSpacing, cWidth, cHeight
 
 module.exports =

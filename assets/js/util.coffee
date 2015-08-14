@@ -116,7 +116,35 @@ class View
     @mouse.local.x = (jqe.pageX - $(@context.canvas).offset().left)
     @mouse.local.y = (jqe.pageY - $(@context.canvas).offset().top)
 
+
+lerp = (a, b, t) -> a + t * (b - a)
+color = (x) ->
+  colors = [
+    [255, 24, 24]
+    [255, 150, 24]
+    [255, 255, 24]
+    [24, 255, 24]
+    [24, 24, 255]
+    [72, 24, 150]
+    [150, 24, 124]
+  ]
+  x = if x <= 6 then x else 6
+
+  prev = Math.floor(x)
+  next = Math.ceil(x)
+
+  t = x - prev
+
+  result = []
+  for i in [0..2]
+    result[i] = if prev < next
+      Math.floor(lerp colors[prev][i], colors[next][i], t)
+    else
+      colors[prev][i]
+  return result
+
 module.exports =
   View: View
   augmentContext: augmentContext
   zoom: zoom
+  color: color

@@ -13,7 +13,7 @@ class App
     @view = new util.View(this)
 
     @resizeCanvas()
-    @grid = @initializeGrid(5, 5)
+    @grid = @initializeGrid(300, 300)
 
   start: ->
     @bindViewEvents(@view.e)
@@ -21,13 +21,13 @@ class App
     @initializeLoop(50)
 
   resizeCanvas: ->
-    h = window.innerHeight - @dom.toolbar.height() - 50
+    h = window.innerHeight - @dom.toolbar.height()
     @dom.canvas.height(h)
     @context.canvas.width = @dom.container.width()
     @context.canvas.height = h
 
-  initializeGrid: (cellWidth, cellHeight) ->
-    return new life.Grid(@context, @context.canvas.width/cellWidth, Math.floor(@context.canvas.height/cellHeight))
+  initializeGrid: (rows, columns) ->
+    return new life.Grid(@context, rows, columns)
 
   getDomElements: ->
     container: $(".main")
@@ -48,17 +48,18 @@ class App
 
     buttons.clear.click =>
       @resizeCanvas()
-      @grid = @initializeGrid(5, 5) #grid = new life.Grid(ctx, $(".main").width()/5, 80)
+      @grid = @initializeGrid(300, 300)
 
   bindViewEvents: (viewEvents) ->
     viewEvents.on "mousedown", (e) =>
       #paused = true
       pt = @context.transformedPoint(e.mouse.x, e.mouse.y)
-      @grid.current[Math.floor(pt.y/5)][Math.floor(pt.x/5)].alive = true
+      if @grid.current[Math.floor(pt.y/5)][Math.floor(pt.x/5)]?
+        @grid.current[Math.floor(pt.y/5)][Math.floor(pt.x/5)].alive = true
 
     viewEvents.on "mousemove", (e) =>
-      if e.mouse.down
-        pt = @context.transformedPoint(e.mouse.x, e.mouse.y)
+      pt = @context.transformedPoint(e.mouse.x, e.mouse.y)
+      if e.mouse.down and @grid.current[Math.floor(pt.y/5)][Math.floor(pt.x/5)]?
         @grid.current[Math.floor(pt.y/5)][Math.floor(pt.x/5)].alive = true
 
     viewEvents.on "mousewheel", util.zoom
