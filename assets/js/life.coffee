@@ -77,7 +77,7 @@ class Grid
       for col in [0..@info.columns]
         if @current[row][col].alive
           cellcolor = [0, 0, 0]
-          cellcolor = util.color(@current[row][col].age/10)
+          cellcolor = util.color(@current[row][col].age/5)
           ctx.fillStyle = "rgb(#{String(cellcolor[0])}, #{String(cellcolor[1])}, #{String(cellcolor[2])})"
           ctx.fillRect (col*cWidth)*cSpacing, (row*cHeight)*cSpacing, cWidth, cHeight
 

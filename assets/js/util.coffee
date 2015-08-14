@@ -128,7 +128,10 @@ color = (x) ->
     [72, 24, 150]
     [150, 24, 124]
   ]
-  x = if x <= 6 then x else 6
+
+  x = Math.pow x, 0.5
+  if x > colors.length-1
+    x = colors.length-1
 
   prev = Math.floor(x)
   next = Math.ceil(x)
