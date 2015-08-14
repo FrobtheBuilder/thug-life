@@ -1,5 +1,6 @@
 express = require 'express'
 assets = require 'connect-assets'
+config = require './config.json'
 
 app = express()
 
@@ -19,4 +20,4 @@ app.use (req, res, next) ->
 app.get '/', (req, res) ->
   res.render 'index.jade'
 
-app.listen 3000
+app.listen config.port
